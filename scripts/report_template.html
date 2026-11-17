@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merchant Growth Analysis</title>
+<style>
+:root {
+  color-scheme: light;
+  --surface-0: #fcfcfb; --surface-1: #f4f3ef; --border: #e3e1da; --rule: #d6d4cc;
+  --text-primary: #141413; --text-secondary: #52514e; --text-muted: #7a7974;
+  --accent: #2a78d6; --grid: #ecebe6; --series-1: #2a78d6; --series-2: #eb6834;
+  --pos-bg: #e6f0fb; --neg-bg: #fbe9e4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-0: #161615; --surface-1: #1f1f1d; --border: #2e2e2c; --rule: #3a3a37;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e88;
+    --accent: #3987e5; --grid: #2a2a28; --series-1: #3987e5; --series-2: #d95926;
+    --pos-bg: #1c2a3b; --neg-bg: #3a231d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #161615; --surface-1: #1f1f1d; --border: #2e2e2c; --rule: #3a3a37;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e88;
+  --accent: #3987e5; --grid: #2a2a28; --series-1: #3987e5; --series-2: #d95926;
+  --pos-bg: #1c2a3b; --neg-bg: #3a231d;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 16px/1.6 Georgia, "Iowan Old Style", "Times New Roman", serif; }
+.sans, h1, h2, h3, .crumb, .meta, .metric, table, .caption, .src, .toc, .storyline, .tip, figure, .tag { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+.crumb { color: var(--text-muted); font-size: 13px; }
+.crumb a { color: var(--text-muted); }
+h1 { font-size: 32px; line-height: 1.2; margin: 8px 0 8px; letter-spacing: -0.01em; }
+.meta { color: var(--text-secondary); font-size: 14px; }
+.tag { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--text-secondary); background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0; margin: 28px 0;
+  border-top: 2px solid var(--text-primary); border-bottom: 1px solid var(--rule); }
+.metric { padding: 14px 14px 14px 0; }
+.metric + .metric { padding-left: 14px; border-left: 1px solid var(--rule); }
+@media (max-width: 560px) { .metric + .metric { border-left: none; padding-left: 0; border-top: 1px solid var(--rule); } }
+.metric .l { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+.metric .v { font-size: 30px; font-weight: 650; margin: 2px 0; }
+.metric .d { font-size: 12px; color: var(--text-secondary); }
+h2 { font-size: 22px; margin: 44px 0 6px; padding-top: 14px; border-top: 1px solid var(--rule); }
+h2 .n { color: var(--accent); margin-right: 6px; }
+h3 { font-size: 16px; margin: 24px 0 6px; }
+.storyline { font-size: 15px; color: var(--text-secondary); border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 8px 0 16px; }
+.storyline b { color: var(--text-primary); font-weight: 600; }
+.toc { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; font-size: 14px; }
+.toc ol { margin: 6px 0 0; padding-left: 20px; columns: 2; column-gap: 28px; }
+@media (max-width: 560px) { .toc ol { columns: 1; } }
+.toc a { color: var(--text-primary); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.tbl { margin: 18px 0 22px; overflow-x: auto; }
+.caption { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.caption .u { font-weight: 400; color: var(--text-muted); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th { text-align: right; font-weight: 600; color: var(--text-secondary); border-bottom: 1.5px solid var(--text-primary); padding: 6px 8px; white-space: nowrap; }
+td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+tr.total td { font-weight: 650; border-top: 1.5px solid var(--text-primary); }
+td.pos { background: var(--pos-bg); }
+td.t, th.t { text-align: left; } td.neg { background: var(--neg-bg); }
+.src { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+figure { margin: 18px 0 22px; }
+figure svg { width: 100%; height: auto; display: block; overflow: visible; }
+.axis text { fill: var(--text-muted); font-size: 11px; }
+.gridline { stroke: var(--grid); }
+.lbl { fill: var(--text-primary); font-size: 11px; }
+.tip { position: fixed; pointer-events: none; background: var(--surface-0); color: var(--text-primary); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 8px; font-size: 12px; opacity: 0; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+ol.recs li, ul.lim li { margin-bottom: 8px; }
+a { color: var(--accent); }
+.foot { margin-top: 48px; border-top: 1px solid var(--rule); padding-top: 14px; font-size: 13px; color: var(--text-muted); font-family: system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<main>
+<div class="crumb"><a href="https://github.com/tinabigbig">tinabigbig</a> › Case studies</div>
+<h1>Merchant Growth &amp; Retention: Olist Marketplace Analysis</h1>
+<div class="meta">Tina Liang · November 2026 · 8 min read</div>
+<div class="tag">Independent case study on public data. Not affiliated with Olist or Owner.com.</div>
+
+<div class="metrics" id="metrics"></div>
+
+<h3 class="sans" style="margin-top:0">Key findings</h3>
+<p id="keyfindings"></p>
+
+<nav class="toc"><b>Contents</b>
+<ol>
+  <li><a href="#c1">Data and the rules set first</a></li>
+  <li><a href="#c2">Order experience</a></li>
+  <li><a href="#c3">Merchant retention</a></li>
+  <li><a href="#c4">Segments and sizing</a></li>
+  <li><a href="#c5">Recommendations and how to test them</a></li>
+  <li><a href="#c6">Limits and method</a></li>
+</ol></nav>
+
+<h2 id="c1"><span class="n">1</span>Data and the rules set first</h2>
+<div class="storyline"><b>Storyline:</b> before counting anything, each table's grain was checked. Two would have misled a naive count: customer ids are new on every order, and some orders carry several reviews.</div>
+<p>The data is the public Olist Brazilian e-commerce dataset: orders placed on a marketplace of small independent sellers between September 2016 and October 2018. Sellers here play the role restaurants play on a platform like Owner.com: small merchants trying to grow online sales. Every number in this report comes from tested dbt models and is reproduced by a separate pandas script.</p>
+<div class="tbl" id="t11"></div>
+<div class="tbl" id="t12"></div>
+<div class="tbl" id="t13"></div>
+
+<h2 id="c2"><span class="n">2</span>Order experience</h2>
+<div class="storyline" id="s2"></div>
+<p id="p2a"></p>
+<div class="tbl" id="t21"></div>
+<figure id="f21"><div class="caption">Figure 2.1 Late deliveries by order month <span class="u">(% of delivered orders with a delivery date)</span></div></figure>
+<p id="p2b"></p>
+<div class="tbl" id="t22"></div>
+<p id="p2c"></p>
+<div class="tbl" id="t23"></div>
+<p id="p2d"></p>
+<div class="tbl" id="t24"></div>
+
+<h2 id="c3"><span class="n">3</span>Merchant retention</h2>
+<div class="storyline" id="s3"></div>
+<p id="p3a"></p>
+<figure id="f31"><div class="caption">Figure 3.1 New sellers still active, by months since first sale <span class="u">(% of new sellers with that many months of data; x axis = months)</span></div></figure>
+<p id="p3b"></p>
+<div class="tbl" id="t31"></div>
+<div class="tbl" id="t32"></div>
+<p id="p3c"></p>
+<div class="tbl" id="t33"></div>
+
+<h2 id="c4"><span class="n">4</span>Segments and sizing</h2>
+<div class="storyline" id="s4"></div>
+<div class="tbl" id="t41"></div>
+<p id="p4a"></p>
+<div class="tbl" id="t42"></div>
+<p id="p4b"></p>
+<p id="p4c"></p>
+
+<h2 id="c5"><span class="n">5</span>Recommendations and how to test them</h2>
+<div class="storyline"><b>Storyline:</b> fix the delivery promise first, help new sellers through their first month with cheap automated nudges, and prove the effect with a randomized test before scaling.</div>
+<ol class="recs" id="recs"></ol>
+
+<h2 id="c6"><span class="n">6</span>Limits and method</h2>
+<ul class="lim">
+  <li><b>Marketplace data, not software usage data.</b> It shows orders, deliveries, reviews and seller activity. It does not show feature adoption or website conversion, and no events were invented to fill that gap.</li>
+  <li><b>Associations, not causes.</b> Seller comparisons rank where to look. Sellers who start small or get bad reviews may differ in product, price or effort.</li>
+  <li><b>Sizing shares are assumptions.</b> The share of sellers moved and the share of the gap credited are inputs, shown so they can be changed or replaced by a test result.</li>
+  <li><b>Sales, not revenue.</b> Values are item prices in Brazilian reais (R$). Olist's commission is not in the data.</li>
+  <li><b>Order-level measures.</b> Review score and lateness belong to the whole order; on multi-seller orders each seller carries them.</li>
+</ul>
+<p class="sans" style="font-size:14px"><b>Method.</b> dbt on DuckDB: 6 staging views, 2 intermediate and 4 mart tables, 25 data tests including exact reconciliation of item value across every mart. One script per question. <code>checks/independent_check.py</code> rebuilds 14 headline numbers from the raw CSVs in pandas, sharing no code with the models; all 14 match.</p>
+<p class="sans" style="font-size:14px"><b>Sources.</b> <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce">Olist Brazilian E-Commerce Public Dataset</a> (Kaggle). Code and models: <a href="https://github.com/tinabigbig/merchant-growth-analytics">github.com/tinabigbig/merchant-growth-analytics</a>.</p>
+
+<div class="foot">Tina Liang · Independent analysis on public data. Figures are historical and illustrative; the sizing is a scenario, not a forecast.</div>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const D = __DATA__;
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
+const pc = (a, b, d = 1) => fmt(100 * a / b, d) + "%";
+const R = x => "R$" + fmt(x);
+const tip = $("tip");
+const show = (e, h) => { tip.innerHTML = h; tip.style.opacity = 1; tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY + 12) + "px"; };
+const hide = () => tip.style.opacity = 0;
+
+function table(id, cap, unit, head, rows, src, opts = {}) {
+  const body = rows.map((r, i) => `<tr class="${opts.totalLast && i === rows.length - 1 ? "total" : ""}">${r.map((c, j) => {
+    const cls = (opts.shade ? opts.shade(i, j) : "") + ((opts.left || []).includes(j) ? " t" : ""); return `<td class="${cls}">${c}</td>`; }).join("")}</tr>`).join("");
+  $(id).innerHTML = `<div class="caption">${cap} <span class="u">${unit}</span></div>
+    <table><thead><tr>${head.map((h, j) => `<th class="${(opts.left || []).includes(j) ? "t" : ""}">${h}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table>
+    <div class="src">${src}</div>`;
+}
+
+// Headline metrics and key findings
+const [ordersW, failed, delivered, withDate, late] = D.outcomes;
+const K = D.kpis;
+const metrics = [
+  ["Late deliveries", pc(late, withDate, 2), `${fmt(late)} of ${fmt(withDate)} delivered orders`],
+  ["Avg review, late orders", "2.27", "vs 4.29 on time (stars)"],
+  ["New sellers back within 3 months", pc(K.back3, K.cohort3), `${fmt(K.back3)} of ${fmt(K.cohort3)}`],
+  ["Sales from sellers active 7+ months", pc(K.v7, K.vall), `${fmt(K.s7)} sellers`],
+];
+$("metrics").innerHTML = metrics.map(([l, v, d]) => `<div class="metric"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("");
+const rl = D.review_by_lateness;
+const seg = Object.fromEntries(D.segments.map(s => [s.s, s]));
+const gap = seg["2-4 orders"].avg - seg["1 order"].avg;
+const base = D.starters_2017 * 0.10 * gap * 0.50;
+$("keyfindings").textContent = `Few orders fail (${pc(failed, ordersW, 2)}), but ${pc(late, withDate, 2)} of delivered orders arrive late, and late orders are reviewed far worse: ${fmt(rl[0].avg, 2)} stars on time against about ${fmt(rl[3].avg, 1)} once an order is 8 or more days late. Lateness is a timing problem, peaking at 19.0% in March 2018 when the promised delivery time was at its shortest, not a few bad sellers. On the seller side, ${pc(K.back3, K.cohort3)} of new sellers sell again within three months; a one-order first month and a bad first review go with much lower return, while a late first delivery barely matters. Moving some one-order starters up is worth about R$${fmt(Math.round(base / 1000))},000 a year in the base case, roughly ${fmt(100 * base / D.sales_2017, 1)}% of sales: enough for automated help, not a staffed program.`;
+
+// Chapter 1
+table("t11", "Table 1.1", "What one row is, by table", ["Table", "One row is", "Rows", "Key unique?"], [
+  ["Orders", "one order", "99,441", "Yes"], ["Customers", "one customer_id, issued per order", "99,441", "Yes"],
+  ["Order items", "one unit on an order", "112,650", "Yes"], ["Payments", "one payment on an order", "103,886", "Yes"],
+  ["Reviews", "a review record; 547 orders have 2+", "99,224", "No"], ["Sellers", "one seller", "3,095", "Yes"]],
+  "Source: raw Olist CSVs; scripts/step1_grain_and_joins.py.", { left: [1] });
+table("t12", "Table 1.2", "Rules applied before any count", ["Issue found", "Rule"], [
+  ["customer_id is new on every order (99,441 ids, 96,096 people)", "Count people on customer_unique_id"],
+  ["Some orders have 2+ reviews", "Keep the most recent review per order"],
+  ["1,278 orders contain items from 2+ sellers", "Seller metrics use one row per seller per order"],
+  ["About 330 orders in 2016 and 20 in Sep to Oct 2018", "Analysis window Jan 2017 to Aug 2018"],
+  ["Only 3.0% of customers bought twice", "Study retention on sellers, not customers"],
+  ["145 sellers sold before 2017", "Exclude them from new-seller cohorts"]],
+  "Source: docs/step1_findings.md; enforced by dbt tests in models/schema.yml and tests/.", { left: [1] });
+
+table("t13", "Table 1.3", "Metric definitions used in this report", ["Metric", "Definition", "One row"], [
+  ["Late", "Delivered after the delivery date promised to the customer", "Order"],
+  ["New seller", "First order in Jan 2017 or later (145 earlier sellers excluded)", "Seller"],
+  ["Active in month k", "At least one order in the k-th calendar month after the first", "Seller-month"],
+  ["Came back", "Active in any of months 1 to 3 (or 1 to 6) after the first month", "Seller"],
+  ["Customer repeat purchase", "Same customer_unique_id with 2+ delivered orders (3.0%; not used for retention)", "Customer"]],
+  "Seller retention and customer repeat purchase are kept separate throughout.", { left: [1, 2] });
+
+// Chapter 2
+$("s2").innerHTML = `<b>Storyline:</b> failures are rare; late delivery is the experience problem, it is driven by peak months, and each day late costs more in reviews.`;
+$("p2a").textContent = `Of ${fmt(ordersW)} orders placed in the window, ${fmt(failed)} were canceled or unavailable. Among ${fmt(withDate)} delivered orders with a delivery date, ${fmt(late)} arrived after the date promised to the customer. Normal months run 3 to 5% late; three months stand out.`;
+table("t21", "Table 2.1", "Order outcomes, orders placed Jan 2017 to Aug 2018", ["Measure", "Count", "Of", "Rate"], [
+  ["Failed (canceled or unavailable)", fmt(failed), fmt(ordersW), pc(failed, ordersW, 2)],
+  ["Delivered", fmt(delivered), fmt(ordersW), pc(delivered, ordersW, 1)],
+  ["Late (delivered after the promised date)", fmt(late), fmt(withDate), pc(late, withDate, 2)]],
+  "One row = one order. Source: fct_orders; scripts/q1_order_experience.py.");
+$("p2b").textContent = `The spikes are not random. In early 2018 the promised delivery time shortened while actual delivery slowed: the estimate did not adjust to what the delivery network could handle.`;
+table("t22", "Table 2.2", "Promised vs actual delivery time, days, delivered orders", ["Order month", "Promised", "Actual", "Gap"],
+  D.promise.map(r => [r.m, fmt(r.promised, 1), fmt(r.actual, 1), fmt(r.promised - r.actual, 1)]),
+  "Promised = estimated delivery date minus purchase date. Source: fct_orders, stg_orders.",
+  { shade: (i, j) => j === 3 && D.promise[i].promised - D.promise[i].actual < 8 ? "neg" : "" });
+$("p2c").textContent = `Reviews fall with each day late. Past a week late, about 80% of orders get one or two stars.`;
+table("t23", "Table 2.3", "Review score by days late, delivered orders with a review", ["Lateness", "Orders", "Avg stars", "1 to 2 stars"],
+  rl.map(r => [r.b, fmt(r.n), fmt(r.avg, 2), fmt(100 * r.low, 1) + "%"]),
+  "Days late = delivery date minus promised date. Source: fct_orders, int_order_reviews.");
+const [sN, sOrders, sLate, sMed, sP90, sBad, sBadLate] = D.seller_late;
+$("p2d").textContent = `It is not a few bad sellers. Among sellers with 30 or more delivered orders, the typical late rate is ${fmt(100 * sMed, 1)}%, and the ${sBad} sellers at 15% or worse hold under a tenth of late orders. Policing sellers would miss most of the problem.`;
+table("t24", "Table 2.4", "Late orders by seller, sellers with 30+ delivered orders", ["Measure", "Value"], [
+  ["Sellers", fmt(sN)], ["Their late orders", `${fmt(sLate)} of ${fmt(sOrders)}`],
+  ["Median seller late rate", fmt(100 * sMed, 1) + "%"], ["90th percentile late rate", fmt(100 * sP90, 1) + "%"],
+  ["Sellers at 15%+ late", `${sBad} (${pc(sBad, sN)})`], ["Their share of late orders", pc(sBadLate, sLate)]],
+  "One row = one seller. Source: fct_seller_orders.");
+
+// Chapter 3
+$("s3").innerHTML = `<b>Storyline:</b> about a quarter of new sellers do not come back within three months; first-month size and first reviews are the early signals, and long-lived sellers carry the business.`;
+$("p3a").textContent = `Retention is measured on sellers because only 3.0% of customers ever bought twice. A seller counts at month k only if their cohort has k months of data, so recent sellers are not counted as lost just because time ran out.`;
+const ret = D.retention.map(r => ({ ...r, p: 100 * r.active / r.n }));
+$("p3b").textContent = `The curve keeps falling: ${fmt(ret[0].p, 1)}% are active in month 1, ${fmt(ret[5].p, 1)}% in month 6 and ${fmt(ret[11].p, 1)}% in month 12. The strongest early signal is how big the first month was.`;
+table("t31", "Table 3.1", "Sellers active in month k after their first sale", ["Month", "Active", "Sellers", "Rate"],
+  [1, 3, 6, 12].map(k => { const r = ret[k - 1]; return [k, fmt(r.active), fmt(r.n), fmt(r.p, 1) + "%"]; }),
+  "One row = one new seller per month. Source: fct_seller_months; scripts/q2_merchant_retention.py.");
+const comb = (rows, label) => {
+  const by = {}; rows.forEach(([size, g, n, b]) => (by[size] = by[size] || {})[g] = [n, b]); return by; };
+const fl = comb(D.first_late), fr = comb(D.first_review);
+const sizes = ["1 order", "2-4 orders", "5+ orders"];
+table("t32", "Table 3.2", "Sold again in months 1 to 3, by first-month size and first-month experience", ["First month", "No late delivery", "Some late", "Review avg above 2", "Review avg 2 or below"],
+  sizes.map(s => {
+    const c = (o, k) => o[s] && o[s][k] ? `${pc(o[s][k][1], o[s][k][0])} <span style="color:var(--text-muted)">(${fmt(o[s][k][0])})</span>` : "";
+    return [s, c(fl, "None late"), c(fl, "Some late"), c(fr, "Avg above 2"), c(fr, "Avg 2 or below")]; }),
+  "Seller counts in brackets. Groups under 50 sellers are too small to read. Compare across a row: same first-month size. Source: fct_seller_orders, fct_seller_months.",
+  { shade: (i, j) => j === 4 && i < 2 ? "neg" : "" });
+$("p3c").textContent = `Holding first-month size fixed, a late first delivery moves return by 0 to 5 points, but a bad first review cuts it by 18 to 43 points. The value sits with survivors: sellers active seven months or more carry four-fifths of sales.`;
+const tv = D.tenure_value, tvAll = tv.reduce((a, r) => a + r[2], 0);
+table("t33", "Table 3.3", "Sales by months a seller was active, R$", ["Months active", "Sellers", "Sales", "Share"],
+  tv.map(r => [r[0], fmt(r[1]), fmt(r[2]), pc(r[2], tvAll)]).concat([["Total", fmt(tv.reduce((a, r) => a + r[1], 0)), fmt(tvAll), "100.0%"]]),
+  "One row = one seller with an order in the window. Source: dim_sellers.", { totalLast: true });
+
+// Chapter 4
+$("s4").innerHTML = `<b>Storyline:</b> one-order starters are the biggest segment, but the money per seller is small; the prize justifies cheap automated help, not a staffed program.`;
+table("t41", "Table 4.1", "New sellers by first-month size, cohorts Jan 2017 to Feb 2018", ["First month", "Sellers", "Share", "Sold again in 6 months", "Avg sales next 6 months", "Median"],
+  D.segments.map(s => [s.s, fmt(s.n), pc(s.n, D.segments.reduce((a, x) => a + x.n, 0)), fmt(100 * s.back, 1) + "%", R(s.avg), R(s.med)]),
+  "One row = one new seller with 6 full months of follow-up. Sales in R$, item price only. Source: fct_seller_months; scripts/q3_segments_and_sizing.py.");
+$("p4a").textContent = `Opportunity per year = one-order starters per year (${fmt(D.starters_2017)} in 2017) × share moved up × gap in average 6-month sales (${R(gap)}) × share of the gap credited as real. The gap is an association, so only part of it is credited.`;
+const cases = [["Low", .05, .25], ["Base", .10, .50], ["High", .20, .75]];
+table("t42", "Table 4.2", "Sizing scenarios, R$ per year", ["Case", "Share moved", "Share credited", "Per year", "% of 2017 sales"],
+  cases.map(([n, m, c]) => { const v = D.starters_2017 * m * gap * c; return [n, fmt(100 * m) + "%", fmt(100 * c) + "%", R(v), fmt(100 * v / D.sales_2017, 1) + "%"]; }),
+  `2017 sales: ${R(D.sales_2017)}. Shares are assumptions, not observed results.`,
+  { shade: (i, j) => j === 3 && i === 1 ? "pos" : "" });
+const medGap = seg["2-4 orders"].med - seg["1 order"].med;
+$("p4b").textContent = `Large sellers pull the averages up. Using medians, the gap is ${R(medGap)} and the base case falls to about R$${fmt(Math.round(D.starters_2017 * .1 * medGap * .5 / 1000))},000. Meanwhile the ${fmt(seg["5+ orders"].n)} sellers who start with five or more orders bring in ${R(seg["5+ orders"].avg * seg["5+ orders"].n)} over six months, more than all one-order starters combined: keeping them is worth at least as much attention.`;
+
+$("p4c").textContent = "These are scenario-based opportunity estimates, not proven gains. Sellers who start bigger may simply have better products or more traffic, so helping a one-order starter will not necessarily lift them to the 2 to 4 order group's results. The help is worth running only if its yearly cost is below the platform's commission on the sales it adds; Olist's commission is not in the data, so that break-even is left as an input.";
+
+// Chapter 5
+$("recs").innerHTML = [
+  `<b>Set delivery promises from current delivery times, and widen them in peak months.</b> Lateness reached 19.0% when promises were shortest. Warn customers early when an order will miss.`,
+  `<b>Protect the first month.</b> Automate a first-month checklist, a nudge after the first sale and a check on the first review; step in when a first review is low.`,
+  `<b>Do not staff a large onboarding program.</b> The base-case prize is about R$${fmt(Math.round(base / 1000))},000 a year, ${fmt(100 * base / D.sales_2017, 1)}% of sales.`,
+  `<b>Prove it before scaling.</b> Offer the first-month help to a random half of new sellers and compare second-month activity and six-month sales with the other half. That replaces the assumed share credited with a measured one. With about 983 one-order starters a year split in half, the test can reliably detect only a lift of about 8 points in the share who sell again (from about 67%), at 80% power and 5% significance. A smaller effect needs about two years of starters (about 6 points) or a wider group that includes 2 to 4 order starters.`,
+].map(x => `<li>${x}</li>`).join("");
+
+// Figures
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a, p) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); p && p.appendChild(n); return n; };
+function line(id, pts, max, ticks, xLabel, tipFn, labelIdx) {
+  const W = 780, H = 240, m = { l: 40, r: 12, t: 16, b: 28 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" }, $(id));
+  const x0 = m.l, x1 = W - m.r, y0 = H - m.b, y1 = m.t;
+  const X = i => x0 + (x1 - x0) * i / (pts.length - 1), Y = v => y0 - (y0 - y1) * v / max;
+  const g = el("g", { class: "axis" }, svg);
+  ticks.forEach(t => { el("line", { x1: x0, x2: x1, y1: Y(t), y2: Y(t), class: "gridline" }, g);
+    el("text", { x: x0 - 6, y: Y(t) + 4, "text-anchor": "end" }, g).textContent = t + "%"; });
+  pts.forEach((p, i) => { const l = xLabel(p, i); if (l) el("text", { x: X(i), y: y0 + 17, "text-anchor": "middle" }, g).textContent = l; });
+  el("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(i) + " " + Y(p.v)).join(" "), fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  labelIdx.forEach(i => el("text", { x: X(i), y: Y(pts[i].v) - 9, class: "lbl", "text-anchor": "middle" }, svg).textContent = fmt(pts[i].v, 1) + "%");
+  const cross = el("line", { y1, y2: y0, stroke: "var(--text-muted)", "stroke-dasharray": "3 3", opacity: 0 }, svg);
+  const dot = el("circle", { r: 5, fill: "var(--series-1)", stroke: "var(--surface-0)", "stroke-width": 2, opacity: 0 }, svg);
+  const hit = el("rect", { x: x0, y: y1, width: x1 - x0, height: y0 - y1, fill: "transparent" }, svg);
+  hit.addEventListener("mousemove", e => { const r = svg.getBoundingClientRect(); const sx = (e.clientX - r.left) * W / r.width;
+    const i = Math.max(0, Math.min(pts.length - 1, Math.round((sx - x0) / (x1 - x0) * (pts.length - 1))));
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", 1);
+    dot.setAttribute("cx", X(i)); dot.setAttribute("cy", Y(pts[i].v)); dot.setAttribute("opacity", 1); show(e, tipFn(pts[i])); });
+  hit.addEventListener("mouseleave", () => { hide(); cross.setAttribute("opacity", 0); dot.setAttribute("opacity", 0); });
+  const src = document.createElement("div"); src.className = "src"; $(id).appendChild(src); return src;
+}
+const lm = D.late_by_month.map(r => ({ ...r, v: 100 * r.late / r.n }));
+const pk = lm.reduce((a, b, i) => b.v > lm[a].v ? i : a, 0);
+line("f21", lm, 20, [0, 5, 10, 15, 20], (p, i) => i % 3 === 0 ? p.m : "", p => `<b>${p.m}</b><br>${fmt(p.v, 1)}% late<br>${fmt(p.late)} / ${fmt(p.n)}`, [pk, lm.findIndex(p => p.m === "2017-11")])
+  .textContent = "One row = one delivered order with a delivery date. Source: fct_orders.";
+line("f31", ret.map(r => ({ ...r, v: r.p })), 100, [0, 25, 50, 75, 100], p => p.k, p => `<b>Month ${p.k}</b><br>${fmt(p.v, 1)}% active<br>${fmt(p.active)} / ${fmt(p.n)} sellers`, [0, 5, 11])
+  .textContent = "One row = one new seller per month since first sale. Source: fct_seller_months.";
+</script>
+</body>
+</html>
